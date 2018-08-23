@@ -2,18 +2,32 @@ package com.rxliuli.example.websocket;
 
 import javax.websocket.*;
 import javax.websocket.server.ServerEndpoint;
+import java.io.IOException;
 
 /**
  * Java 使用 WebSocket 进行双向通信
  *
  * @author rxliuli
  */
-@ServerEndpoint("/hello")
+@ServerEndpoint(value = "/hello",
+        encoders = {
+                MessageEncoder.class
+        },
+        decoders = {
+                MessageDecoder.class
+        }
+)
 public class HelloWorldEndpoint {
     @OnMessage
-    public String hello(String message) {
-        System.out.println("message: " + message);
-        return message;
+    public Person hello(Person person, Session session) {
+        try {
+            person.setName("Mr. " + person.getName());
+            //这里发送对象到客户端时也会进行序列化之后再发送
+            session.getBasicRemote().sendObject(person);
+        } catch (IOException | EncodeException e) {
+            e.printStackTrace();
+        }
+        return person;
     }
 
     @OnOpen
