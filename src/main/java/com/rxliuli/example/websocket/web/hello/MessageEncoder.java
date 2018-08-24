@@ -1,15 +1,15 @@
-package com.rxliuli.example.websocket;
+package com.rxliuli.example.websocket.web.hello;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import javax.websocket.Decoder;
+import javax.websocket.Encoder;
 import javax.websocket.EndpointConfig;
-import java.io.IOException;
 
 /**
  * @author rxliuli
  */
-public class MessageDecoder implements Decoder.Text<Person> {
+public class MessageEncoder implements Encoder.Text<Person> {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
@@ -23,17 +23,12 @@ public class MessageDecoder implements Decoder.Text<Person> {
     }
 
     @Override
-    public Person decode(String s) {
+    public String encode(Person person) {
         try {
-            return objectMapper.readValue(s, Person.class);
-        } catch (IOException e) {
+            return objectMapper.writeValueAsString(person);
+        } catch (JsonProcessingException e) {
             e.printStackTrace();
             return null;
         }
-    }
-
-    @Override
-    public boolean willDecode(String s) {
-        return s != null;
     }
 }

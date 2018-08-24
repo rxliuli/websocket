@@ -1,4 +1,4 @@
-package com.rxliuli.example.websocket;
+package com.rxliuli.example.websocket.web.hello;
 
 import javax.websocket.*;
 import javax.websocket.server.ServerEndpoint;

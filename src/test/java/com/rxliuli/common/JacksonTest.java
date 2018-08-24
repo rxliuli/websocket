@@ -2,7 +2,7 @@ package com.rxliuli.common;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.rxliuli.example.websocket.Person;
+import com.rxliuli.example.websocket.web.hello.Person;
 import org.junit.Test;
 
 /**
