@@ -20,6 +20,7 @@ public class SpringWebSocketConfig extends AbstractWebSocketMessageBrokerConfigu
     @Override
     public void registerStompEndpoints(StompEndpointRegistry stompEndpointRegistry) {
         stompEndpointRegistry.addEndpoint("/endpoint")
+                //设置允许所有源请求
                 .setAllowedOrigins("*")
                 .withSockJS();
     }

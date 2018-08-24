@@ -12,7 +12,7 @@
   <script type="application/javascript" src="https://cdn.bootcss.com/sockjs-client/1.1.4/sockjs.min.js"></script>
   <script type="application/javascript" src="https://cdn.bootcss.com/stomp.js/2.3.3/stomp.min.js"></script>
   <script>
-    let socket = new SockJS('http://127.0.0.1:8085/endpoint');
+    let socket = new SockJS('http://127.0.0.1:8080/endpoint');
     stompClient = Stomp.over(socket);
     stompClient.connect(
       {},
