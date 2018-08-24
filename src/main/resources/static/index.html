@@ -9,62 +9,66 @@
 </head>
 
 <body>
-  <script type="application/javascript" src="https://cdn.bootcss.com/sockjs-client/1.1.4/sockjs.min.js"></script>
-  <script type="application/javascript" src="https://cdn.bootcss.com/stomp.js/2.3.3/stomp.min.js"></script>
-  <script>
+<script type="application/javascript" src="https://cdn.bootcss.com/sockjs-client/1.1.4/sockjs.min.js"></script>
+<script type="application/javascript" src="https://cdn.bootcss.com/stomp.js/2.3.3/stomp.min.js"></script>
+<script>
     let socket = new SockJS('http://127.0.0.1:8080/endpoint');
     stompClient = Stomp.over(socket);
     stompClient.connect(
-      {},
-      // 连接成功回调函数
-      frame => {
-        console.log('服务端 Socket 连接建立')
+        {},
+        // 连接成功回调函数
+        frame => {
+            console.log('服务端 Socket 连接建立')
 
-        // 获取 websocket 连接的 sessionId
-        const sessionId = /\/([^\/]+)\/websocket/.exec(socket._transport.url)[1];
-        console.log("connected, session id: " + sessionId);
+            // 获取 websocket 连接的 sessionId
+            const sessionId = /\/([^\/]+)\/websocket/.exec(socket._transport.url)[1];
+            console.log("connected, session id: " + sessionId);
 
-        // 订阅广播消息（服务端单向推送）
-        const subscription_broadcast = stompClient.subscribe('/topic/broadcasting',
-          (response) => {
-            console.log(`[广播（服务端单向推送）]: ${response.body}`)
-          });
+            // 订阅广播消息（服务端单向推送）
+            const subscription_broadcast = stompClient.subscribe('/topic/broadcasting/unidirectional/allClient',
+                (response) => {
+                    console.log(`[广播（服务端单向推送）]: ${response.body}`)
+                });
 
-        // 订阅广播消息（双向通信）
-        stompClient.subscribe('/topic/allClient', res => {
-          console.log(`[广播（双向通信）]: ${res.body}`)
-        })
+            // 订阅广播消息（双向通信）
+            stompClient.subscribe('/topic/broadcasting/bilateral/allClient', res => {
+                console.log(`[广播（双向通信）]: ${res.body}`)
+            })
 
-        // 订阅私人消息（双向通信）
-        stompClient.subscribe(`/user/${sessionId}/thisClient`, res => {
-          console.log(`[点对点推送（双向通信）]: ${res.body}`)
-        })
+            // 订阅私人消息（双向通信）
+            stompClient.subscribe(`/user/${sessionId}/push/bilateral/thisClient`, res => {
+                console.log(`[点对点推送（双向通信）]: ${res.body}`)
+            })
 
-      }, error => {
-        console.log('Socket 连接失败')
-      });
+            send()
 
-    // 发送一个消息到服务端
-    var headers = {};
-    var body = {
-      'message': '消息内容'
-    };
-    stompClient.send("/talk", headers, JSON.stringify(body));
+        }, error => {
+            console.log('Socket 连接失败')
+        });
 
-    // 发送一个消息到客户端并且只向当前 session 通信
-    stompClient.send('/speak', headers, JSON.stringify(body))
+    function send() {
+        // 发送一个消息到服务端
+        var headers = {};
+        var body = {
+            'message': '消息内容'
+        };
+        stompClient.send("/talk", headers, JSON.stringify(body));
+
+        // 发送一个消息到客户端并且只向当前 session 通信
+        stompClient.send('/speak', headers, JSON.stringify(body))
+    }
 
     /**
      * 监听窗口关闭事件，窗口关闭前，主动关闭连接，防止连接还没断开就关闭窗口，server 端会抛异常
      */
     window.onbeforeunload = function () {
-      if (stompClient !== null) {
-        stompClient.disconnect();
-        socket.close();
-      }
-      console.log('断开连接');
+        if (stompClient !== null) {
+            stompClient.disconnect();
+            socket.close();
+        }
+        console.log('断开连接');
     };
-  </script>
+</script>
 </body>
 
 </html>

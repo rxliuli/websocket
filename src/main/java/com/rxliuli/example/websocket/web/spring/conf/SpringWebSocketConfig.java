@@ -1,4 +1,4 @@
-package com.rxliuli.example.websocket.web.spring;
+package com.rxliuli.example.websocket.web.spring.conf;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
@@ -7,6 +7,8 @@ import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBr
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 
 /**
+ * 配置 SpringBoot WebSocket 支持
+ *
  * @author rxliuli
  */
 @Configuration
@@ -20,7 +22,7 @@ public class SpringWebSocketConfig extends AbstractWebSocketMessageBrokerConfigu
     @Override
     public void registerStompEndpoints(StompEndpointRegistry stompEndpointRegistry) {
         stompEndpointRegistry.addEndpoint("/endpoint")
-                //设置允许所有源请求
+                //设置允许所有源请求（跨域）
                 .setAllowedOrigins("*")
                 .withSockJS();
     }
@@ -32,6 +34,8 @@ public class SpringWebSocketConfig extends AbstractWebSocketMessageBrokerConfigu
      */
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
+        //注册简单代理（里面是前缀）
+        //注：默认 topic 是主题（广播），user 则是用户（点对点）
         registry.enableSimpleBroker("/topic", "/user");
     }
 }
