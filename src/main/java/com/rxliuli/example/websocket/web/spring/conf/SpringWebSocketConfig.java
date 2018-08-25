@@ -35,7 +35,12 @@ public class SpringWebSocketConfig extends AbstractWebSocketMessageBrokerConfigu
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         //注册简单代理（里面是前缀）
-        //注：默认 topic 是主题（广播），user 则是用户（点对点）
-        registry.enableSimpleBroker("/topic", "/user");
+        registry.enableSimpleBroker("/topic");
+        /*
+         * 点对点推送的前缀（默认就是 user）
+         * 订阅主题：/user/{sessionId}/push/bilateral/thisClient
+         * 推送方式：@SendToUser("/push/bilateral/thisClient")
+         */
+        registry.setUserDestinationPrefix("/user");
     }
 }
