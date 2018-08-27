@@ -24,12 +24,8 @@ public class ScheduledRefreshJob {
         simpMessagingTemplate.convertAndSend("/topic/broadcasting/unidirectional/allClient", new Person(1L, "rx", false));
     }
 
-    /**
-     * 不停地推送消息到指定客户端
-     */
     @Scheduled(fixedDelay = 10 * 1000)
     public void scheduledPush() {
-        simpMessagingTemplate.convertAndSend("/topic/broadcasting/unidirectional/allClient", new Person(1L, "rx", false));
+        simpMessagingTemplate.convertAndSendToUser("", "/push/unidirectional/thisClient", new Person(2L, "琉璃", false));
     }
-
 }
