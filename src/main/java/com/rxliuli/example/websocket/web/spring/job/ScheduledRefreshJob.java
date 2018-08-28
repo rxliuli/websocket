@@ -29,7 +29,8 @@ public class ScheduledRefreshJob {
 
     @Scheduled(fixedDelay = 10 * 1000)
     public void scheduledPush() {
-        socketSessionRegistry.getAllSessionIds().entrySet().stream().filter(kv -> !SocketSessionRegistry.DIRECT_TOURIST.equals(kv.getKey()))
+        socketSessionRegistry.getAllSessionIds().entrySet().stream()
+                .filter(kv -> !SocketSessionRegistry.DIRECT_TOURIST.equals(kv.getKey()))
                 .forEach(kv -> kv.getValue().forEach(sessionId -> simpMessagingTemplate.convertAndSendToUser(sessionId, "/push/unidirectional/thisClient", new Person(2L, "琉璃", false))));
     }
 }

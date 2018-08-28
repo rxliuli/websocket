@@ -12,43 +12,58 @@
 <script type="application/javascript" src="https://cdn.bootcss.com/sockjs-client/1.1.4/sockjs.min.js"></script>
 <script type="application/javascript" src="https://cdn.bootcss.com/stomp.js/2.3.3/stomp.min.js"></script>
 <script>
-    let socket = new SockJS('http://127.0.0.1:8080/endpoint');
-    stompClient = Stomp.over(socket);
-    stompClient.connect(getHeaders(),
-        // 连接成功回调函数
-        frame => {
-            console.log('服务端 Socket 连接建立')
+    //最大重连次数
+    let maxLen = 10;
+    //当前重连次数
+    let currentLen = 0;
 
-            // 获取 websocket 连接的 sessionId
-            const sessionId = /\/([^\/]+)\/websocket/.exec(socket._transport.url)[1];
-            console.log("connected, session id: " + sessionId);
+    function connectWebSocket() {
+        let socket = new SockJS('http://127.0.0.1:8081/endpoint');
+        stompClient = Stomp.over(socket);
+        stompClient.connect(getHeaders(),
+            // 连接成功回调函数
+            frame => {
+                console.log('服务端 Socket 连接建立');
 
-            // 订阅广播消息（服务端单向推送）
-            stompClient.subscribe('/topic/broadcasting/unidirectional/allClient',
-                (response) => {
-                    console.log(`[广播（服务端单向推送）]: ${response.body}`)
+                // 获取 websocket 连接的 sessionId
+                const sessionId = /\/([^\/]+)\/websocket/.exec(socket._transport.url)[1];
+                console.log("connected, session id: " + sessionId);
+
+                // 订阅广播消息（服务端单向推送）
+                stompClient.subscribe('/topic/broadcasting/unidirectional/allClient',
+                    (response) => {
+                        console.log(`[广播（服务端单向推送）]: ${response.body}`)
+                    });
+
+                // 订阅广播消息（双向通信）
+                stompClient.subscribe('/topic/broadcasting/bilateral/allClient', res => {
+                    console.log(`[广播（双向通信）]: ${res.body}`)
                 });
 
-            // 订阅广播消息（双向通信）
-            stompClient.subscribe('/topic/broadcasting/bilateral/allClient', res => {
-                console.log(`[广播（双向通信）]: ${res.body}`)
+                // 订阅私人消息（双向通信）
+                stompClient.subscribe(`/user/${sessionId}/push/bilateral/thisClient`, res => {
+                    console.log(`[点对点推送（双向通信）]: ${res.body}`)
+                });
+
+                // 订阅私人消息（单向通信）
+                stompClient.subscribe(`/user/${sessionId}/push/unidirectional/thisClient`, res => {
+                    console.log(`[点对点推送（单向通信）]：${res.body}`);
+                });
+
+                send();
+
+            }, error => {
+                if (currentLen < maxLen) {
+                    console.log('Socket 连接失败，将在 3s 后重试');
+                    setTimeout(() => connectWebSocket(), 3000)
+                } else {
+                    console.log('Socket 连接失败次数过多，将不再重试')
+                }
+                currentLen++;
             });
+    }
 
-            // 订阅私人消息（双向通信）
-            stompClient.subscribe(`/user/${sessionId}/push/bilateral/thisClient`, res => {
-                console.log(`[点对点推送（双向通信）]: ${res.body}`)
-            });
-
-            // 订阅私人消息（单向通信）
-            stompClient.subscribe(`/user/${sessionId}/push/unidirectional/thisClient`, res => {
-                console.log(`[点对点推送（单向通信）]：${res.body}`);
-            });
-
-            send();
-
-        }, error => {
-            console.log('Socket 连接失败')
-        });
+    connectWebSocket();
 
     function send() {
         // 发送一个消息到服务端
