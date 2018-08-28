@@ -1,8 +1,10 @@
 package com.rxliuli.example.websocket.web.spring.socket;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.stereotype.Controller;
 
@@ -13,6 +15,9 @@ import org.springframework.stereotype.Controller;
  */
 @Controller
 public class BilateralPushSocket {
+    @Autowired
+    private SimpMessagingTemplate template;
+
     /**
      * 点对点推送（双向通信）
      *

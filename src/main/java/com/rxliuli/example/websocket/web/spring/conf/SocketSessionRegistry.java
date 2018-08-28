@@ -17,6 +17,10 @@ import java.util.concurrent.CopyOnWriteArraySet;
 @Component
 public class SocketSessionRegistry {
     /**
+     * 未登录的用户默认存储的 user id
+     */
+    public static final String DIRECT_TOURIST = "DIRECT_TOURIST";
+    /**
      * 这个集合存储 用户 id -> session 列表
      * 单个用户可能打开多个页面，就会出现多个 Socket 会话
      */

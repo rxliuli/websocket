@@ -14,8 +14,7 @@
 <script>
     let socket = new SockJS('http://127.0.0.1:8080/endpoint');
     stompClient = Stomp.over(socket);
-    stompClient.connect(
-        {},
+    stompClient.connect(getHeaders(),
         // 连接成功回调函数
         frame => {
             console.log('服务端 Socket 连接建立')
@@ -25,7 +24,7 @@
             console.log("connected, session id: " + sessionId);
 
             // 订阅广播消息（服务端单向推送）
-            const subscription_broadcast = stompClient.subscribe('/topic/broadcasting/unidirectional/allClient',
+            stompClient.subscribe('/topic/broadcasting/unidirectional/allClient',
                 (response) => {
                     console.log(`[广播（服务端单向推送）]: ${response.body}`)
                 });
@@ -40,6 +39,11 @@
                 console.log(`[点对点推送（双向通信）]: ${res.body}`)
             });
 
+            // 订阅私人消息（单向通信）
+            stompClient.subscribe(`/user/${sessionId}/push/unidirectional/thisClient`, res => {
+                console.log(`[点对点推送（单向通信）]：${res.body}`);
+            });
+
             send();
 
         }, error => {
@@ -48,7 +52,7 @@
 
     function send() {
         // 发送一个消息到服务端
-        var headers = {};
+        var headers = getHeaders();
         var body = {
             'message': '消息内容'
         };
@@ -63,11 +67,22 @@
      */
     window.onbeforeunload = function () {
         if (stompClient !== null) {
-            stompClient.disconnect();
+            stompClient.disconnect(getHeaders(),);
             socket.close();
         }
         console.log('断开连接');
     };
+
+    /**
+     * 获取一个认证的 headers 信息
+     * @return {{"X-Requested-With": string, Authorization: any}} 含有认证信息的 headers 对象
+     */
+    function getHeaders() {
+        return {
+            'X-Requested-With': 'X-Requested-With',
+            'Authorization': localStorage.token
+        }
+    }
 </script>
 </body>
 

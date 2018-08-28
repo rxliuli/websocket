@@ -15,7 +15,7 @@ public class UnidirectionalPushSocket {
      * 这是单向推送到客户端的，不接受从客户端的输入
      */
     @SendToUser("/push/unidirectional/thisClient")
-    public Object broadcasting() {
+    public Object push() {
         return null;
     }
 }
