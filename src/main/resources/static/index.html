@@ -33,14 +33,14 @@
             // 订阅广播消息（双向通信）
             stompClient.subscribe('/topic/broadcasting/bilateral/allClient', res => {
                 console.log(`[广播（双向通信）]: ${res.body}`)
-            })
+            });
 
             // 订阅私人消息（双向通信）
             stompClient.subscribe(`/user/${sessionId}/push/bilateral/thisClient`, res => {
                 console.log(`[点对点推送（双向通信）]: ${res.body}`)
-            })
+            });
 
-            send()
+            send();
 
         }, error => {
             console.log('Socket 连接失败')
