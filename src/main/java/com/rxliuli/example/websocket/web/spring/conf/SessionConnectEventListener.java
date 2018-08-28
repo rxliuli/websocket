@@ -13,6 +13,9 @@ import org.springframework.web.socket.messaging.SessionConnectEvent;
 public class SessionConnectEventListener extends BaseSessionEventListener<SessionConnectEvent> {
     @Override
     public void onApplicationEvent(SessionConnectEvent event) {
-        using(event, (user, sessionId) -> webAgentSessionRegistry.registerSessionId(user, sessionId));
+        using(event, (user, sessionId) -> {
+            webAgentSessionRegistry.registerSessionId(user, sessionId);
+            log.info("Socket 连接成功，用户：{}，会话：{}", user, sessionId);
+        });
     }
 }

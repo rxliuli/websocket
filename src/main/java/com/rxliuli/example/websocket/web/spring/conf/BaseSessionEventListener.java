@@ -30,12 +30,7 @@ public abstract class BaseSessionEventListener<Event extends AbstractSubProtocol
         StompHeaderAccessor sha = StompHeaderAccessor.wrap(event.getMessage());
         //login get from browser
         List<String> shaNativeHeader = sha.getNativeHeader("Authorization");
-        String user;
-        if (shaNativeHeader == null || shaNativeHeader.isEmpty()) {
-            user = null;
-        } else {
-            user = shaNativeHeader.get(0);
-        }
+        String user = shaNativeHeader == null || shaNativeHeader.isEmpty() ? null : shaNativeHeader.get(0);
         //如果当前用户没有登录（没有认证信息），就添加到游客里面
         if (user == null || "".equals(user) || "undefined".equals(user) || "null".equals(user)) {
             user = SocketSessionRegistry.DIRECT_TOURIST;
