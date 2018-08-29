@@ -1,6 +1,7 @@
 package com.rxliuli.example.websocket.web.hello;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.rxliuli.example.websocket.web.entity.Person;
 
 import javax.websocket.Decoder;
 import javax.websocket.EndpointConfig;

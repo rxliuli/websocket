@@ -1,6 +1,6 @@
 package com.rxliuli.example.websocket.web.spring.job;
 
-import com.rxliuli.example.websocket.web.hello.Person;
+import com.rxliuli.example.websocket.web.entity.Person;
 import com.rxliuli.example.websocket.web.spring.conf.SocketSessionRegistry;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;

@@ -1,5 +1,7 @@
 package com.rxliuli.example.websocket.web.hello;
 
+import com.rxliuli.example.websocket.web.entity.Person;
+
 import javax.websocket.*;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;

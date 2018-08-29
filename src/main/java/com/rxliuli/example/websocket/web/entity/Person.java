@@ -1,4 +1,4 @@
-package com.rxliuli.example.websocket.web.hello;
+package com.rxliuli.example.websocket.web.entity;
 
 import java.io.Serializable;
 

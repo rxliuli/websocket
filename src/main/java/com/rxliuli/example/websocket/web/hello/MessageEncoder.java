@@ -2,6 +2,7 @@ package com.rxliuli.example.websocket.web.hello;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.rxliuli.example.websocket.web.entity.Person;
 
 import javax.websocket.Encoder;
 import javax.websocket.EndpointConfig;
