@@ -12,108 +12,176 @@
 <script type="application/javascript" src="https://cdn.bootcss.com/sockjs-client/1.1.4/sockjs.min.js"></script>
 <script type="application/javascript" src="https://cdn.bootcss.com/stomp.js/2.3.3/stomp.min.js"></script>
 <script>
-    //最大重连次数
-    let maxLen = 10;
-    //当前重连次数
-    let currentLen = 0;
-    let endpoint = 'http://127.0.0.1:8080/endpoint';
-
-    var stompClient;
-
-    function connectWebSocket() {
-        let socket = new SockJS(endpoint);
-        stompClient = Stomp.over(socket);
-        stompClient.connect(getHeaders(),
-            // 连接成功回调函数
-            frame => {
-                console.log('服务端 Socket 连接建立');
-
-                // 获取 websocket 连接的 sessionId
-                const sessionId = /\/([^\/]+)\/websocket/.exec(socket._transport.url)[1];
-                console.log("connected, session id: " + sessionId);
-
-                // 订阅广播消息（服务端单向推送）
-                stompClient.subscribe('/topic/broadcasting/unidirectional/allClient',
-                    (response) => {
-                        console.log(`[广播（服务端单向推送）]: ${response.body}`)
-                    });
-
-                // 订阅广播消息（双向通信）
-                stompClient.subscribe('/topic/broadcasting/bilateral/allClient', res => {
-                    console.log(`[广播（双向通信）]: ${res.body}`)
-                });
-
-                // 订阅私人消息（双向通信）
-                stompClient.subscribe(`/user/${sessionId}/push/bilateral/thisClient`, res => {
-                    console.log(`[点对点推送（双向通信）]: ${res.body}`)
-                });
-
-                // 订阅私人消息（单向通信）
-                stompClient.subscribe(`/user/${sessionId}/push/unidirectional/thisClient`, res => {
-                    console.log(`[点对点推送（单向通信）]：${res.body}`);
-                });
-
-                // 订阅返回复杂类型的消息
-                stompClient.subscribe('/topic/complexMessage/allClient', res => {
-                    console.log('订阅复杂类型类型的返回消息：{}', JSON.parse(res.body))
-                });
-
-                send();
-
-            }, error => {
-                if (currentLen < maxLen) {
-                    console.log('Socket 连接失败，将在 3s 后重试');
-                    setTimeout(() => connectWebSocket(), 3000)
+    /**
+     * websocket 连接的工具类
+     * 该工具类依赖于 sockjs-client 与 webstomp-client 两个类库
+     * 使用方法：
+     * 1. 设定 endpoint 属性
+     * 2. 添加连接成功 / 失败的回调函数进行连接
+     * 3. 订阅 / 发送消息
+     * 4. 断开连接
+     */
+    const socketUtil = {
+        //最大重连次数
+        maxLen: 10,
+        //当前重连次数
+        currentLen: 0,
+        // 每次连接的时间间隔
+        timeInterval: 3000,
+        // 连接的 Socket 节点
+        endpoint: undefined,
+        // Socket 连接信息
+        stompClient: undefined,
+        socket: undefined,
+        /**
+         * Socket 连接的方法
+         */
+        connectWebSocket(successFn, errorFn) {
+            this.socket = new SockJS(this.endpoint);
+            this.stompClient = Stomp.over(this.socket);
+            this.stompClient.connect(this.getHeaders(), successFn, error => {
+                if (this.currentLen++ < this.maxLen) {
+                    console.log(`Socket 连接失败，将在 ${this.timeInterval / 1000}s 后重试`);
+                    setTimeout(() => this.connectWebSocket(), 3000)
                 } else {
                     console.log('Socket 连接失败次数过多，将不再重试')
                 }
-                currentLen++;
+                errorFn(error)
             });
-    }
-
-    connectWebSocket();
-
-    function send() {
-        // 发送一个消息到服务端
-        var headers = getHeaders();
-        var body = {
-            'message': '消息内容'
-        };
-        stompClient.send("/talk", headers, JSON.stringify(body));
-
-        // 发送一个消息到客户端并且只向当前 session 通信
-        stompClient.send('/speak', headers, JSON.stringify(body))
-
-        // 发送一个复杂类型的消息
-        stompClient.send('/complexMessage', headers, JSON.stringify({
-            id: 17,
-            name: 'rxliuli',
-            sex: false
-        }))
-    }
-
-    /**
-     * 监听窗口关闭事件，窗口关闭前，主动关闭连接，防止连接还没断开就关闭窗口，server 端会抛异常
-     */
-    window.onbeforeunload = function () {
-        if (stompClient !== null) {
-            stompClient.disconnect(function () {
-                console.log('断开连接');
-            }, getHeaders());
-            socket.close();
+        },
+        /**
+         * 断开连接的方法
+         */
+        disconnectWebSocket() {
+            if (this.stompClient) {
+                this.stompClient.disconnect(function () {
+                    console.log('断开连接');
+                }, this.getHeaders());
+                this.socket.close();
+            }
+        },
+        /**
+         * 获取当前 Socket 连接的 session id
+         */
+        getSessionId() {
+            return /\/([^\/]+)\/websocket/.exec(this.socket._transport.url)[1]
+        },
+        /**
+         * 获取一个认证的 headers 信息
+         * 该方法可以被覆盖
+         * @return {{"X-Requested-With": string, Authorization: any}} 含有认证信息的 headers 对象
+         */
+        getHeaders() {
+            return {
+                'X-Requested-With': 'X-Requested-With',
+                'Authorization': localStorage.token
+            }
+        },
+        /**
+         * 发送简单文本类型的消息
+         */
+        sendText(url, body, headers = {}) {
+            return this.stompClient.send(url, headers, body)
+        },
+        /**
+         * 发送 json 类型的消息
+         */
+        sendJSON(url, body, headers = {}) {
+            return this.stompClient.send(url, headers, JSON.stringify(body))
+        },
+        /**
+         * 订阅简单文本类型的消息
+         */
+        subscribeText(url, successFn) {
+            return this.stompClient.subscribe(url, res => successFn(res))
+        },
+        /**
+         * 订阅 json 类型的消息
+         */
+        subscribeJSON(url, successFn) {
+            return this.stompClient.subscribe(url, res => successFn(JSON.parse(res.body)))
+        },
+        /**
+         * 取消订阅
+         * @param obj 订阅对象
+         */
+        unsubscribe(obj) {
+            if (obj && obj.unsubscribe) {
+                obj.unsubscribe()
+            }
         }
     };
 
-    /**
-     * 获取一个认证的 headers 信息
-     * @return {{"X-Requested-With": string, Authorization: any}} 含有认证信息的 headers 对象
-     */
-    function getHeaders() {
-        return {
-            'X-Requested-With': 'X-Requested-With',
-            'Authorization': localStorage.token
-        }
+
+    // 连接的 Socket 节点
+    socketUtil.endpoint = 'http://127.0.0.1:8080/endpoint';
+    // 连接成功的回调
+    let successFn = () => {
+        console.log('服务端 Socket 连接建立');
+        let sessionId = socketUtil.getSessionId();
+
+        // 获取 websocket 连接的 sessionId
+        console.log(`connected, session id: ${socketUtil.getSessionId()}`);
+
+        // 订阅广播消息（服务端单向推送）
+        socketUtil.subscribeText('/topic/broadcasting/unidirectional/allClient',
+            (response) => {
+                console.log(`[广播（服务端单向推送）]: ${response.body}`)
+            });
+
+        // 订阅广播消息（双向通信）
+        socketUtil.subscribeText('/topic/broadcasting/bilateral/allClient', res => {
+            console.log(`[广播（双向通信）]: ${res.body}`)
+        });
+
+        // 订阅私人消息（双向通信）
+        socketUtil.subscribeText(`/user/${sessionId}/push/bilateral/thisClient`, res => {
+            console.log(`[点对点推送（双向通信）]: ${res.body}`)
+        });
+
+        // 订阅私人消息（单向通信）
+        socketUtil.subscribeText(`/user/${sessionId}/push/unidirectional/thisClient`, res => {
+            console.log(`[点对点推送（单向通信）]：${res.body}`)
+        });
+
+        // 订阅返回复杂类型的消息
+        socketUtil.subscribeJSON('/topic/complexMessage/allClient', json => {
+            console.log('订阅复杂类型类型的返回消息：{}', json)
+        });
+
+        socketUtil.subscribeJSON('/topic/complexMessage/allClient')
+            .then(res => {
+                console.log('Promise res：{}', res)
+            });
+
+        send();
+    };
+
+    function send() {
+        // 发送一个消息到服务端
+        var body = {
+            'message': '消息内容'
+        };
+        socketUtil.sendJSON("/talk", body);
+
+        // 发送一个消息到客户端并且只向当前 session 通信
+        socketUtil.sendJSON('/speak', body);
+
+        // 发送一个复杂类型的消息
+        socketUtil.sendJSON('/complexMessage', {
+            id: 17,
+            name: 'rxliuli',
+            sex: false
+        })
     }
+
+    // 连接失败的回调
+    let errorFn = error => {
+        console.log('自定义的 Socket 连接失败提示')
+    };
+    // 监听窗口关闭事件，窗口关闭前，主动关闭连接，防止连接还没断开就关闭窗口，server 端会抛异常
+    window.onbeforeunload = socketUtil.disconnectWebSocket;
+    socketUtil.connectWebSocket(successFn, errorFn);
 </script>
 </body>
 
