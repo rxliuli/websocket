@@ -12,6 +12,10 @@ import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 public class SessionDisconnectEventListener extends BaseSessionEventListener<SessionDisconnectEvent> {
     @Override
     public void onApplicationEvent(SessionDisconnectEvent event) {
-        using(event, (user, sessionId) -> webAgentSessionRegistry.unregisterSessionId(user, sessionId));
+        using(event, (user, sessionId) -> {
+            webAgentSessionRegistry.unregisterSessionId(user, sessionId);
+            log.info("Socket 连接断开，用户：{}，会话：{}", user, sessionId);
+        });
+
     }
 }

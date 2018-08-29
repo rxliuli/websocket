@@ -16,9 +16,12 @@
     let maxLen = 10;
     //当前重连次数
     let currentLen = 0;
+    let endpoint = 'http://127.0.0.1:8080/endpoint';
+
+    var stompClient;
 
     function connectWebSocket() {
-        let socket = new SockJS('http://127.0.0.1:8080/endpoint');
+        let socket = new SockJS(endpoint);
         stompClient = Stomp.over(socket);
         stompClient.connect(getHeaders(),
             // 连接成功回调函数
@@ -94,10 +97,11 @@
      */
     window.onbeforeunload = function () {
         if (stompClient !== null) {
-            stompClient.disconnect(getHeaders(),);
+            stompClient.disconnect(function () {
+                console.log('断开连接');
+            }, getHeaders());
             socket.close();
         }
-        console.log('断开连接');
     };
 
     /**

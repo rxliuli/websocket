@@ -57,10 +57,8 @@ public class SocketSessionRegistry {
         Assert.notNull(user, "User must not be null");
         Assert.notNull(sessionId, "Session ID must not be null");
         synchronized (this.lock) {
+            this.userSessionIds.putIfAbsent(user, new CopyOnWriteArraySet<>());
             Set<String> set = this.userSessionIds.get(user);
-            if (set == null) {
-                this.userSessionIds.put(user, new CopyOnWriteArraySet<>());
-            }
             set.add(sessionId);
         }
     }
