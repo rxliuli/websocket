@@ -18,7 +18,7 @@
     let currentLen = 0;
 
     function connectWebSocket() {
-        let socket = new SockJS('http://127.0.0.1:8081/endpoint');
+        let socket = new SockJS('http://127.0.0.1:8080/endpoint');
         stompClient = Stomp.over(socket);
         stompClient.connect(getHeaders(),
             // 连接成功回调函数
@@ -50,6 +50,11 @@
                     console.log(`[点对点推送（单向通信）]：${res.body}`);
                 });
 
+                // 订阅返回复杂类型的消息
+                stompClient.subscribe('/topic/complexMessage/allClient', res => {
+                    console.log('订阅复杂类型类型的返回消息：{}', JSON.parse(res.body))
+                });
+
                 send();
 
             }, error => {
@@ -75,6 +80,13 @@
 
         // 发送一个消息到客户端并且只向当前 session 通信
         stompClient.send('/speak', headers, JSON.stringify(body))
+
+        // 发送一个复杂类型的消息
+        stompClient.send('/complexMessage', headers, JSON.stringify({
+            id: 17,
+            name: 'rxliuli',
+            sex: false
+        }))
     }
 
     /**
